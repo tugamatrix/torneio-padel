@@ -223,20 +223,21 @@ async function renderJogos(){
   const res=await getResultado(i)
 
   let r="-"
-  if(res) r=res.r1+" - "+res.r2
+  if(res && !isNaN(res.r1) && !isNaN(res.r2)){
+   r=res.r1+" - "+res.r2
+  }
 
   let botao=""
-
   if(admin){
    botao=`<button onclick="editarResultado(${i})">Editar</button>`
-  } else {
-   botao=""
   }
 
   const tr=document.createElement("tr")
   tr.innerHTML=`<td>${i+1}</td><td>${j[0]}</td><td>${j[1]}</td><td>${j[2]}</td><td>${r}</td><td>${botao}</td>`
 
   tbody.appendChild(tr)
+ }
+}(tr)
  }
 }
 
