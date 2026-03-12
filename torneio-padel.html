@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Torneio de Padel</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#e5e7eb;margin:0}
+header{background:#020617;padding:32px;text-align:center;border-bottom:2px solid #1f2937}
+h1{margin:0;font-size:36px}
+.subtitle{opacity:.7;margin-top:6px}
+.container{max-width:1200px;margin:auto;padding:30px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:30px}
+.card{background:#111827;border-radius:14px;padding:18px;text-align:center}
+.card h3{margin:0;font-size:13px;opacity:.7;text-transform:uppercase}
+.card p{font-size:26px;margin:6px 0 0 0;font-weight:bold}
+.progressBox{background:#111827;border-radius:12px;padding:20px;margin-bottom:30px}
+.progressBar{width:100%;height:18px;background:#1f2937;border-radius:20px;overflow:hidden;margin-top:10px}
+.progressFill{height:100%;background:#22c55e;width:0%}
+table{width:100%;border-collapse:collapse;background:#0f172a;border-radius:12px;overflow:hidden}
+th{background:#111827;text-transform:uppercase;font-size:12px}
+th,td{padding:12px;border-bottom:1px solid #1f2937;text-align:center}
+.rank1{background:#3f6212;font-weight:bold}
+.rank2{background:#334155;font-weight:bold}
+.rank3{background:#1e293b;font-weight:bold}
+.rankPos{font-weight:bold}
+button{background:#22c55e;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:bold}
+.adminpanel{background:#111827;padding:20px;border-radius:12px;margin-bottom:30px}
+input{padding:6px;border-radius:6px;border:none;margin:4px}
+.rules{background:#111827;padding:20px;border-radius:12px;line-height:1.6}
+footer{margin-top:60px;text-align:center;font-size:12px;opacity:.6}
+</style>
+</head>
+<body>
+<header>
+<h1>Torneio de Padel</h1>
+<div class="subtitle">Liga todos contra todos · 10 duplas</div>
+</header>
+
+<div class="container">
+
+<div class="adminpanel">
+<h2>Painel Admin</h2>
+<input type="password" id="password" placeholder="password">
+<button onclick="loginAdmin()">Entrar</button>
+<br>
+<input type="number" id="match" placeholder="Jogo">
+<input type="number" id="r1" placeholder="1 / 0">
+<input type="number" id="r2" placeholder="1 / 0">
+<button onclick="guardarResultado()">Guardar</button>
+</div>
+
+<div class="cards">
+<div class="card"><h3>Duplas</h3><p id="totalEquipas"></p></div>
+<div class="card"><h3>Jogos Totais</h3><p id="totalJogos"></p></div>
+<div class="card"><h3>Jogos Realizados</h3><p id="jogosFeitos"></p></div>
+<div class="card"><h3>Jogos por Fazer</h3><p id="jogosFalta"></p></div>
+</div>
+
+<div class="progressBox">
+<b>Progresso do Torneio</b>
+<div id="progressText"></div>
+<div class="progressBar"><div class="progressFill" id="progressFill"></div></div>
+</div>
+
+<section>
+<h2>Ranking</h2>
+<table id="tabela">
+<thead>
+<tr>
+<th>Pos</th>
+<th>Dupla</th>
+<th>V</th>
+<th>E</th>
+<th>D</th>
+<th>Dif</th>
+<th>Pontos</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section>
+<h2>Calendário de Jogos</h2>
+<table id="jogos">
+<thead>
+<tr>
+<th>#</th>
+<th>Data</th>
+<th>Dupla 1</th>
+<th>Dupla 2</th>
+<th>Resultado</th>
+<th></th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section class="rules">
+<h2>Regras</h2>
+<p><b>Star Point (Ponto de Ouro)</b>. A 40‑40 disputam-se no máximo duas vantagens. Se persistir empate joga-se o ponto de ouro.</p>
+<p><b>Tempo de jogo</b>. Aquecimento oficial de 3 minutos. Intervalo entre pontos de 20 segundos.</p>
+</section>
+
+<footer>Ranking automático estilo liga</footer>
+</div>
+
+<script type="module">
+
+// Tornar funções acessíveis ao HTML
+window.loginAdmin = loginAdmin;
+window.guardarResultado = guardarResultado;
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+ apiKey: "AIzaSyDShcgUqasMECU2rA50PQvH4tBIcok412s",
+ authDomain: "torneio-de-padel.firebaseapp.com",
+ projectId: "torneio-de-padel",
+ storageBucket: "torneio-de-padel.firebasestorage.app",
+ messagingSenderId: "217863908513",
+ appId: "1:217863908513:web:f1ee98e6c5b2e4edc8d4e0"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let admin=false
+
+const equipas=[
+"Kary/Jota",
+"Guiga / Zé Maria Reis",
+"Nhe / João Santos",
+"Nini / Duarte",
+"Ramos / Batata",
+"Jaime / Ricardo",
+"Tuga / Marinho",
+"Cuba / Formiga",
+"João Paulo / Joninha",
+"Filipe Braz / João Mantas"
+]
+
+const jogos=[
+["09/03/2026","Kary/Jota","Filipe Braz / João Mantas"],
+["09/03/2026","Guiga / Zé Maria Reis","João Paulo / Joninha"],
+["09/03/2026","Nhe / João Santos","Cuba / Formiga"],
+["09/03/2026","Nini / Duarte","Tuga / Marinho"],
+["09/03/2026","Ramos / Batata","Jaime / Ricardo"],
+
+["16/03/2026","Kary/Jota","João Paulo / Joninha"],
+["16/03/2026","Filipe Braz / João Mantas","Cuba / Formiga"],
+["16/03/2026","Guiga / Zé Maria Reis","Tuga / Marinho"],
+["16/03/2026","Nhe / João Santos","Jaime / Ricardo"],
+["16/03/2026","Nini / Duarte","Ramos / Batata"],
+
+["23/03/2026","Kary/Jota","Cuba / Formiga"],
+["23/03/2026","João Paulo / Joninha","Tuga / Marinho"],
+["23/03/2026","Filipe Braz / João Mantas","Jaime / Ricardo"],
+["23/03/2026","Guiga / Zé Maria Reis","Ramos / Batata"],
+["23/03/2026","Nhe / João Santos","Nini / Duarte"],
+
+["30/03/2026","Kary/Jota","Tuga / Marinho"],
+["30/03/2026","Cuba / Formiga","Jaime / Ricardo"],
+["30/03/2026","João Paulo / Joninha","Ramos / Batata"],
+["30/03/2026","Filipe Braz / João Mantas","Nini / Duarte"],
+["30/03/2026","Guiga / Zé Maria Reis","Nhe / João Santos"],
+
+["06/04/2026","Kary/Jota","Jaime / Ricardo"],
+["06/04/2026","Tuga / Marinho","Ramos / Batata"],
+["06/04/2026","Cuba / Formiga","Nini / Duarte"],
+["06/04/2026","João Paulo / Joninha","Nhe / João Santos"],
+["06/04/2026","Filipe Braz / João Mantas","Guiga / Zé Maria Reis"]
+]
+
+async function getResultado(i){
+ const ref = doc(db,"resultados",String(i))
+ const snap = await getDoc(ref)
+ if(snap.exists()) return snap.data()
+ return null
+}
+
+async function guardarResultado(){
+ if(!admin) return
+
+ const m=parseInt(document.getElementById("match").value)
+ const r1=parseInt(document.getElementById("r1").value)
+ const r2=parseInt(document.getElementById("r2").value)
+
+ await setDoc(doc(db,"resultados",String(m)),{r1:r1,r2:r2})
+ atualizarTudo()
+}
+
+function loginAdmin(){
+ const pass=document.getElementById("password").value
+ if(pass=="padel123"){
+  admin=true
+  alert("Modo admin ativo")
+ }
+}
+
+async function renderJogos(){
+ const tbody=document.querySelector("#jogos tbody")
+ tbody.innerHTML=""
+
+ for(let i=0;i<jogos.length;i++){
+  const j=jogos[i]
+  const res=await getResultado(i)
+
+  let r="-"
+  if(res) r=res.r1+" - "+res.r2
+
+  const tr=document.createElement("tr")
+  tr.innerHTML=`<td>${i}</td><td>${j[0]}</td><td>${j[1]}</td><td>${j[2]}</td><td>${r}</td><td></td>`
+  tbody.appendChild(tr)
+ }
+}
+
+async function calcularTabela(){
+
+ const tabela={}
+ equipas.forEach(e=>tabela[e]={v:0,e:0,d:0,p:0})
+
+ for(let i=0;i<jogos.length;i++){
+
+  const j=jogos[i]
+  const res=await getResultado(i)
+
+  if(!res) continue
+
+  const a=res.r1
+  const b=res.r2
+
+  if(a==1 && b==0){
+   tabela[j[1]].v++
+   tabela[j[1]].p+=2
+   tabela[j[2]].d++
+  }
+
+  else if(a==0 && b==1){
+   tabela[j[2]].v++
+   tabela[j[2]].p+=2
+   tabela[j[1]].d++
+  }
+
+  else{
+   tabela[j[1]].e++
+   tabela[j[2]].e++
+   tabela[j[1]].p++
+   tabela[j[2]].p++
+  }
+ }
+
+ const ranking=Object.entries(tabela).sort((a,b)=>b[1].p-a[1].p)
+ const tbody=document.querySelector("#tabela tbody")
+ tbody.innerHTML=""
+
+ ranking.forEach(([nome,s],i)=>{
+  const diff=s.v-s.d
+  const tr=document.createElement("tr")
+  if(i==0) tr.classList.add("rank1")
+  if(i==1) tr.classList.add("rank2")
+  if(i==2) tr.classList.add("rank3")
+  tr.innerHTML=`<td class="rankPos">${i+1}º</td><td>${nome}</td><td>${s.v}</td><td>${s.e}</td><td>${s.d}</td><td>${diff}</td><td>${s.p}</td>`
+  tbody.appendChild(tr)
+ })
+}
+
+async function atualizarStats(){
+ document.getElementById("totalEquipas").innerText=equipas.length
+ document.getElementById("totalJogos").innerText=jogos.length
+
+ let feitos=0
+ for(let i=0;i<jogos.length;i++){
+  const res=await getResultado(i)
+  if(res) feitos++
+ }
+
+ document.getElementById("jogosFeitos").innerText=feitos
+ document.getElementById("jogosFalta").innerText=jogos.length-feitos
+
+ const percent=Math.round((feitos/jogos.length)*100)
+ document.getElementById("progressFill").style.width=percent+"%"
+ document.getElementById("progressText").innerText=feitos+" / "+jogos.length+" jogos concluídos ("+percent+"%)"
+}
+
+async function atualizarTudo(){
+ await renderJogos()
+ await calcularTabela()
+ await atualizarStats()
+}
+
+atualizarTudo()
+
+</script>
+</body>
+</html>
