@@ -229,7 +229,7 @@ async function renderJogos(){
 
   let botao=""
   if(admin){
-   botao=`<button onclick="editarResultado(${i})">Editar</button>`
+   botao=`<button onclick="editarResultado('+i+')">Editar</button>`
   }
 
   const tr=document.createElement("tr")
