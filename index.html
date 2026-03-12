@@ -109,12 +109,8 @@ footer{margin-top:60px;text-align:center;font-size:12px;opacity:.6}
 
 <script type="module">
 
-// Tornar funções acessíveis ao HTML
-window.loginAdmin = loginAdmin;
-window.guardarResultado = guardarResultado;
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
  apiKey: "AIzaSyDShcgUqasMECU2rA50PQvH4tBIcok412s",
@@ -160,20 +156,17 @@ const jogos=[
 ["23/03/2026","João Paulo / Joninha","Tuga / Marinho"],
 ["23/03/2026","Filipe Braz / João Mantas","Jaime / Ricardo"],
 ["23/03/2026","Guiga / Zé Maria Reis","Ramos / Batata"],
-["23/03/2026","Nhe / João Santos","Nini / Duarte"],
-
-["30/03/2026","Kary/Jota","Tuga / Marinho"],
-["30/03/2026","Cuba / Formiga","Jaime / Ricardo"],
-["30/03/2026","João Paulo / Joninha","Ramos / Batata"],
-["30/03/2026","Filipe Braz / João Mantas","Nini / Duarte"],
-["30/03/2026","Guiga / Zé Maria Reis","Nhe / João Santos"],
-
-["06/04/2026","Kary/Jota","Jaime / Ricardo"],
-["06/04/2026","Tuga / Marinho","Ramos / Batata"],
-["06/04/2026","Cuba / Formiga","Nini / Duarte"],
-["06/04/2026","João Paulo / Joninha","Nhe / João Santos"],
-["06/04/2026","Filipe Braz / João Mantas","Guiga / Zé Maria Reis"]
+["23/03/2026","Nhe / João Santos","Nini / Duarte"]
 ]
+
+function loginAdmin(){
+ const pass=document.getElementById("password").value
+ if(pass=="padel123"){
+  admin=true
+  alert("Modo admin ativo")
+  renderJogos()
+ }
+}
 
 async function getResultado(i){
  const ref = doc(db,"resultados",String(i))
@@ -185,7 +178,7 @@ async function getResultado(i){
 async function guardarResultado(){
  if(!admin) return
 
- const m=parseInt(document.getElementById("match").value)
+ const m=parseInt(document.getElementById("match").value)-1
  const r1=parseInt(document.getElementById("r1").value)
  const r2=parseInt(document.getElementById("r2").value)
 
@@ -193,11 +186,30 @@ async function guardarResultado(){
  atualizarTudo()
 }
 
-function loginAdmin(){
- const pass=document.getElementById("password").value
- if(pass=="padel123"){
-  admin=true
-  alert("Modo admin ativo")
+async function editarResultado(i){
+ if(!admin) return
+
+ const acao=prompt("1 = Inserir/Alterar resultado
+2 = Reset (apagar resultado)")
+
+ if(acao=="2"){
+  await deleteDoc(doc(db,"resultados",String(i)))
+  atualizarTudo()
+  return
+ }
+
+ if(acao=="1"){
+  const r1=prompt("Resultado dupla 1 (1 vitória / 0 derrota / 0 empate)")
+  const r2=prompt("Resultado dupla 2 (1 vitória / 0 derrota / 0 empate)")
+
+  if(r1===null||r2===null) return
+
+  await setDoc(doc(db,"resultados",String(i)),{
+   r1:parseInt(r1),
+   r2:parseInt(r2)
+  })
+
+  atualizarTudo()
  }
 }
 
@@ -206,14 +218,19 @@ async function renderJogos(){
  tbody.innerHTML=""
 
  for(let i=0;i<jogos.length;i++){
+
   const j=jogos[i]
   const res=await getResultado(i)
 
   let r="-"
   if(res) r=res.r1+" - "+res.r2
 
+  let botao=""
+  if(admin) botao=`<button onclick="editarResultado(${i})">Editar</button>`
+
   const tr=document.createElement("tr")
-  tr.innerHTML=`<td>${i}</td><td>${j[0]}</td><td>${j[1]}</td><td>${j[2]}</td><td>${r}</td><td></td>`
+  tr.innerHTML=`<td>${i+1}</td><td>${j[0]}</td><td>${j[1]}</td><td>${j[2]}</td><td>${r}</td><td>${botao}</td>`
+
   tbody.appendChild(tr)
  }
 }
@@ -238,13 +255,11 @@ async function calcularTabela(){
    tabela[j[1]].p+=2
    tabela[j[2]].d++
   }
-
   else if(a==0 && b==1){
    tabela[j[2]].v++
    tabela[j[2]].p+=2
    tabela[j[1]].d++
   }
-
   else{
    tabela[j[1]].e++
    tabela[j[2]].e++
@@ -258,12 +273,17 @@ async function calcularTabela(){
  tbody.innerHTML=""
 
  ranking.forEach(([nome,s],i)=>{
+
   const diff=s.v-s.d
+
   const tr=document.createElement("tr")
+
   if(i==0) tr.classList.add("rank1")
   if(i==1) tr.classList.add("rank2")
   if(i==2) tr.classList.add("rank3")
+
   tr.innerHTML=`<td class="rankPos">${i+1}º</td><td>${nome}</td><td>${s.v}</td><td>${s.e}</td><td>${s.d}</td><td>${diff}</td><td>${s.p}</td>`
+
   tbody.appendChild(tr)
  })
 }
@@ -282,6 +302,7 @@ async function atualizarStats(){
  document.getElementById("jogosFalta").innerText=jogos.length-feitos
 
  const percent=Math.round((feitos/jogos.length)*100)
+
  document.getElementById("progressFill").style.width=percent+"%"
  document.getElementById("progressText").innerText=feitos+" / "+jogos.length+" jogos concluídos ("+percent+"%)"
 }
@@ -291,6 +312,11 @@ async function atualizarTudo(){
  await calcularTabela()
  await atualizarStats()
 }
+
+// tornar funções acessíveis ao HTML
+window.loginAdmin=loginAdmin
+window.guardarResultado=guardarResultado
+window.editarResultado=editarResultado
 
 atualizarTudo()
 
