@@ -6,32 +6,41 @@
 <title>Torneio de Padel</title>
 <style>
 body{font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#e5e7eb;margin:0}
-header{background:#020617;padding:32px;text-align:center;border-bottom:2px solid #1f2937}
-h1{margin:0;font-size:36px}
+header{background:#020617;padding:30px;text-align:center;border-bottom:2px solid #1f2937}
+h1{margin:0;font-size:34px}
 .subtitle{opacity:.7;margin-top:6px}
 .container{max-width:1200px;margin:auto;padding:30px}
+
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:30px}
 .card{background:#111827;border-radius:14px;padding:18px;text-align:center}
 .card h3{margin:0;font-size:13px;opacity:.7;text-transform:uppercase}
 .card p{font-size:26px;margin:6px 0 0 0;font-weight:bold}
+
 .progressBox{background:#111827;border-radius:12px;padding:20px;margin-bottom:30px}
 .progressBar{width:100%;height:18px;background:#1f2937;border-radius:20px;overflow:hidden;margin-top:10px}
 .progressFill{height:100%;background:#22c55e;width:0%}
+
+.adminpanel{background:#111827;padding:20px;border-radius:12px;margin-bottom:30px}
+
+button{background:#22c55e;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:bold}
+
+input{padding:6px;border-radius:6px;border:none;margin:4px}
+
+section{margin-top:40px}
+
 table{width:100%;border-collapse:collapse;background:#0f172a;border-radius:12px;overflow:hidden}
 th{background:#111827;text-transform:uppercase;font-size:12px}
 th,td{padding:12px;border-bottom:1px solid #1f2937;text-align:center}
+
 .rank1{background:#3f6212;font-weight:bold}
 .rank2{background:#334155;font-weight:bold}
 .rank3{background:#1e293b;font-weight:bold}
-.rankPos{font-weight:bold}
-button{background:#22c55e;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:bold}
-.adminpanel{background:#111827;padding:20px;border-radius:12px;margin-bottom:30px}
-input{padding:6px;border-radius:6px;border:none;margin:4px}
-.rules{background:#111827;padding:20px;border-radius:12px;line-height:1.6}
+
 footer{margin-top:60px;text-align:center;font-size:12px;opacity:.6}
 </style>
 </head>
 <body>
+
 <header>
 <h1>Torneio de Padel</h1>
 <div class="subtitle">Liga todos contra todos · 10 duplas</div>
@@ -98,13 +107,7 @@ footer{margin-top:60px;text-align:center;font-size:12px;opacity:.6}
 </table>
 </section>
 
-<section class="rules">
-<h2>Regras</h2>
-<p><b>Star Point (Ponto de Ouro)</b>. A 40‑40 disputam-se no máximo duas vantagens. Se persistir empate joga-se o ponto de ouro.</p>
-<p><b>Tempo de jogo</b>. Aquecimento oficial de 3 minutos. Intervalo entre pontos de 20 segundos.</p>
-</section>
-
-<footer>Ranking automático estilo liga</footer>
+<footer>Sistema de torneio automático</footer>
 </div>
 
 <script type="module">
@@ -144,33 +147,21 @@ const jogos=[
 ["09/03/2026","Guiga / Zé Maria Reis","João Paulo / Joninha"],
 ["09/03/2026","Nhe / João Santos","Cuba / Formiga"],
 ["09/03/2026","Nini / Duarte","Tuga / Marinho"],
-["09/03/2026","Ramos / Batata","Jaime / Ricardo"],
-
-["16/03/2026","Kary/Jota","João Paulo / Joninha"],
-["16/03/2026","Filipe Braz / João Mantas","Cuba / Formiga"],
-["16/03/2026","Guiga / Zé Maria Reis","Tuga / Marinho"],
-["16/03/2026","Nhe / João Santos","Jaime / Ricardo"],
-["16/03/2026","Nini / Duarte","Ramos / Batata"],
-
-["23/03/2026","Kary/Jota","Cuba / Formiga"],
-["23/03/2026","João Paulo / Joninha","Tuga / Marinho"],
-["23/03/2026","Filipe Braz / João Mantas","Jaime / Ricardo"],
-["23/03/2026","Guiga / Zé Maria Reis","Ramos / Batata"],
-["23/03/2026","Nhe / João Santos","Nini / Duarte"]
+["09/03/2026","Ramos / Batata","Jaime / Ricardo"]
 ]
 
 function loginAdmin(){
  const pass=document.getElementById("password").value
- if(pass=="padel123"){
+ if(pass==="padel123"){
   admin=true
-  alert("Modo admin ativo")
-  renderJogos()
+  alert("Admin ativo")
+  atualizarTudo()
  }
 }
 
 async function getResultado(i){
- const ref = doc(db,"resultados",String(i))
- const snap = await getDoc(ref)
+ const ref=doc(db,"resultados",String(i))
+ const snap=await getDoc(ref)
  if(snap.exists()) return snap.data()
  return null
 }
@@ -189,18 +180,17 @@ async function guardarResultado(){
 async function editarResultado(i){
  if(!admin) return
 
- const acao=prompt("1 = Inserir/Alterar resultado
-2 = Reset (apagar resultado)")
+ const acao=prompt("1 = inserir resultado\n2 = reset")
 
- if(acao=="2"){
+ if(acao==="2"){
   await deleteDoc(doc(db,"resultados",String(i)))
   atualizarTudo()
   return
  }
 
- if(acao=="1"){
-  const r1=prompt("Resultado dupla 1 (1 vitória / 0 derrota / 0 empate)")
-  const r2=prompt("Resultado dupla 2 (1 vitória / 0 derrota / 0 empate)")
+ if(acao==="1"){
+  const r1=prompt("Resultado dupla 1")
+  const r2=prompt("Resultado dupla 2")
 
   if(r1===null||r2===null) return
 
@@ -222,27 +212,22 @@ async function renderJogos(){
   const j=jogos[i]
   const res=await getResultado(i)
 
-  let r="-"
-  if(res && !isNaN(res.r1) && !isNaN(res.r2)){
-   r=res.r1+" - "+res.r2
-  }
+  let resultado="-"
+  if(res) resultado=res.r1+" - "+res.r2
 
   let botao=""
   if(admin){
-   botao=`<button onclick="editarResultado('+i+')">Editar</button>`
+   botao='<button onclick="editarResultado('+i+')">Editar</button>'
   }
 
   const tr=document.createElement("tr")
-  tr.innerHTML=`<td>${i+1}</td><td>${j[0]}</td><td>${j[1]}</td><td>${j[2]}</td><td>${r}</td><td>${botao}</td>`
+  tr.innerHTML="<td>"+(i+1)+"</td><td>"+j[0]+"</td><td>"+j[1]+"</td><td>"+j[2]+"</td><td>"+resultado+"</td><td>"+botao+"</td>"
 
   tbody.appendChild(tr)
- }
-}(tr)
  }
 }
 
 async function calcularTabela(){
-
  const tabela={}
  equipas.forEach(e=>tabela[e]={v:0,e:0,d:0,p:0})
 
@@ -275,20 +260,20 @@ async function calcularTabela(){
  }
 
  const ranking=Object.entries(tabela).sort((a,b)=>b[1].p-a[1].p)
+
  const tbody=document.querySelector("#tabela tbody")
  tbody.innerHTML=""
 
  ranking.forEach(([nome,s],i)=>{
-
   const diff=s.v-s.d
 
   const tr=document.createElement("tr")
 
-  if(i==0) tr.classList.add("rank1")
-  if(i==1) tr.classList.add("rank2")
-  if(i==2) tr.classList.add("rank3")
+  if(i===0) tr.classList.add("rank1")
+  if(i===1) tr.classList.add("rank2")
+  if(i===2) tr.classList.add("rank3")
 
-  tr.innerHTML=`<td class="rankPos">${i+1}º</td><td>${nome}</td><td>${s.v}</td><td>${s.e}</td><td>${s.d}</td><td>${diff}</td><td>${s.p}</td>`
+  tr.innerHTML="<td>"+(i+1)+"º</td><td>"+nome+"</td><td>"+s.v+"</td><td>"+s.e+"</td><td>"+s.d+"</td><td>"+diff+"</td><td>"+s.p+"</td>"
 
   tbody.appendChild(tr)
  })
@@ -299,6 +284,7 @@ async function atualizarStats(){
  document.getElementById("totalJogos").innerText=jogos.length
 
  let feitos=0
+
  for(let i=0;i<jogos.length;i++){
   const res=await getResultado(i)
   if(res) feitos++
@@ -319,7 +305,6 @@ async function atualizarTudo(){
  await atualizarStats()
 }
 
-// tornar funções acessíveis ao HTML
 window.loginAdmin=loginAdmin
 window.guardarResultado=guardarResultado
 window.editarResultado=editarResultado
@@ -327,5 +312,6 @@ window.editarResultado=editarResultado
 atualizarTudo()
 
 </script>
+
 </body>
 </html>
