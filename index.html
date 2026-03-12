@@ -91,7 +91,7 @@ footer{margin-top:60px;text-align:center;font-size:12px;opacity:.6}
 <th>Dupla 1</th>
 <th>Dupla 2</th>
 <th>Resultado</th>
-<th></th>
+<th>Editar</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -226,7 +226,12 @@ async function renderJogos(){
   if(res) r=res.r1+" - "+res.r2
 
   let botao=""
-  if(admin) botao=`<button onclick="editarResultado(${i})">Editar</button>`
+
+  if(admin){
+   botao=`<button onclick="editarResultado(${i})">Editar</button>`
+  } else {
+   botao=""
+  }
 
   const tr=document.createElement("tr")
   tr.innerHTML=`<td>${i+1}</td><td>${j[0]}</td><td>${j[1]}</td><td>${j[2]}</td><td>${r}</td><td>${botao}</td>`
