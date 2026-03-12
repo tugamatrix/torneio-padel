@@ -30,10 +30,6 @@ th,td{padding:12px;border-bottom:1px solid #1f2937;text-align:center}
 .rank2{background:#334155;font-weight:bold}
 .rank3{background:#1e293b;font-weight:bold}
 
-.expired{background:#7f1d1d}
-
-.prazo{font-size:11px;opacity:.6}
-
 button{background:#22c55e;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:bold}
 
 .adminpanel{background:#111827;padding:20px;border-radius:12px;margin-bottom:30px}
@@ -174,7 +170,61 @@ const equipas=[
 "Filipe Braz / João Mantas"
 ]
 
-const jogos=[ ... MANTIVE EXATAMENTE O TEU CALENDÁRIO COMPLETO ... ]
+const jogos=[
+["09/03/2026","Kary/Jota","Filipe Braz / João Mantas"],
+["09/03/2026","Guiga / Zé Maria Reis","João Paulo / Joninha"],
+["09/03/2026","Nhe / João Santos","Cuba / Formiga"],
+["09/03/2026","Nini / Duarte","Tuga / Marinho"],
+["09/03/2026","Ramos / Batata","Jaime / Ricardo"],
+
+["16/03/2026","Kary/Jota","João Paulo / Joninha"],
+["16/03/2026","Filipe Braz / João Mantas","Cuba / Formiga"],
+["16/03/2026","Guiga / Zé Maria Reis","Tuga / Marinho"],
+["16/03/2026","Nhe / João Santos","Jaime / Ricardo"],
+["16/03/2026","Nini / Duarte","Ramos / Batata"],
+
+["23/03/2026","Kary/Jota","Cuba / Formiga"],
+["23/03/2026","João Paulo / Joninha","Tuga / Marinho"],
+["23/03/2026","Filipe Braz / João Mantas","Jaime / Ricardo"],
+["23/03/2026","Guiga / Zé Maria Reis","Ramos / Batata"],
+["23/03/2026","Nhe / João Santos","Nini / Duarte"],
+
+["30/03/2026","Kary/Jota","Tuga / Marinho"],
+["30/03/2026","Cuba / Formiga","Jaime / Ricardo"],
+["30/03/2026","João Paulo / Joninha","Ramos / Batata"],
+["30/03/2026","Filipe Braz / João Mantas","Nini / Duarte"],
+["30/03/2026","Guiga / Zé Maria Reis","Nhe / João Santos"],
+
+["06/04/2026","Kary/Jota","Jaime / Ricardo"],
+["06/04/2026","Tuga / Marinho","Ramos / Batata"],
+["06/04/2026","Cuba / Formiga","Nini / Duarte"],
+["06/04/2026","João Paulo / Joninha","Nhe / João Santos"],
+["06/04/2026","Filipe Braz / João Mantas","Guiga / Zé Maria Reis"],
+
+["13/04/2026","Kary/Jota","Ramos / Batata"],
+["13/04/2026","Jaime / Ricardo","Nini / Duarte"],
+["13/04/2026","Tuga / Marinho","Nhe / João Santos"],
+["13/04/2026","Cuba / Formiga","Guiga / Zé Maria Reis"],
+["13/04/2026","João Paulo / Joninha","Filipe Braz / João Mantas"],
+
+["20/04/2026","Kary/Jota","Nini / Duarte"],
+["20/04/2026","Ramos / Batata","Nhe / João Santos"],
+["20/04/2026","Jaime / Ricardo","Guiga / Zé Maria Reis"],
+["20/04/2026","Tuga / Marinho","Filipe Braz / João Mantas"],
+["20/04/2026","Cuba / Formiga","João Paulo / Joninha"],
+
+["27/04/2026","Kary/Jota","Nhe / João Santos"],
+["27/04/2026","Nini / Duarte","Guiga / Zé Maria Reis"],
+["27/04/2026","Ramos / Batata","Filipe Braz / João Mantas"],
+["27/04/2026","Jaime / Ricardo","João Paulo / Joninha"],
+["27/04/2026","Tuga / Marinho","Cuba / Formiga"],
+
+["04/05/2026","Kary/Jota","Guiga / Zé Maria Reis"],
+["04/05/2026","Nhe / João Santos","Filipe Braz / João Mantas"],
+["04/05/2026","Nini / Duarte","João Paulo / Joninha"],
+["04/05/2026","Ramos / Batata","Cuba / Formiga"],
+["04/05/2026","Jaime / Ricardo","Tuga / Marinho"]
+]
 
 function loginAdmin(){
  const pass=document.getElementById("password").value
@@ -190,48 +240,6 @@ async function getResultado(i){
  const snap=await getDoc(ref)
  if(snap.exists()) return snap.data()
  return null
-}
-
-/* NOVA FUNÇÃO */
-async function verificarExpiracao(i){
-
- const partes=jogos[i][0].split("/")
- const data=new Date(partes[2],partes[1]-1,partes[0])
-
- const limite=new Date(data)
- limite.setDate(limite.getDate()+14)
-
- const hoje=new Date()
-
- const res=await getResultado(i)
-
- if(!res && hoje>limite){
-
-  await setDoc(doc(db,"resultados",String(i)),{
-   r1:0,
-   r2:0
-  })
-
- }
-
-}
-
-function prazoTexto(i){
-
- const partes=jogos[i][0].split("/")
- const data=new Date(partes[2],partes[1]-1,partes[0])
-
- const limite=new Date(data)
- limite.setDate(limite.getDate()+14)
-
- const hoje=new Date()
-
- const diff=Math.ceil((limite-hoje)/(1000*60*60*24))
-
- if(diff<0) return "Prazo expirado"
-
- return diff+" dias restantes"
-
 }
 
 async function guardarResultado(){
@@ -285,8 +293,6 @@ async function renderJogos(){
 
  for(let i=0;i<jogos.length;i++){
 
-  await verificarExpiracao(i)
-
   const j=jogos[i]
   const res=await getResultado(i)
 
@@ -300,16 +306,12 @@ async function renderJogos(){
 
   const tr=document.createElement("tr")
 
-  const prazo=prazoTexto(i)
-
-  if(prazo=="Prazo expirado" && !res) tr.classList.add("expired")
-
   tr.innerHTML=
   "<td>"+i+"</td>"+
   "<td>"+j[0]+"</td>"+
   "<td>"+j[1]+"</td>"+
   "<td>"+j[2]+"</td>"+
-  "<td>"+r+"<br><span class='prazo'>"+prazo+"</span></td>"+
+  "<td>"+r+"</td>"+
   "<td>"+botao+"</td>"
 
   tbody.appendChild(tr)
@@ -318,10 +320,93 @@ async function renderJogos(){
 
 }
 
-/* resto do código mantém-se exatamente igual */
+async function calcularTabela(){
 
-async function calcularTabela(){ ... }
-async function atualizarStats(){ ... }
+ const tabela={}
+ equipas.forEach(e=>tabela[e]={v:0,e:0,d:0,p:0})
+
+ for(let i=0;i<jogos.length;i++){
+
+  const j=jogos[i]
+  const res=await getResultado(i)
+
+  if(!res) continue
+
+  const a=res.r1
+  const b=res.r2
+
+  if(a==1 && b==0){
+   tabela[j[1]].v++
+   tabela[j[1]].p+=2
+   tabela[j[2]].d++
+  }
+  else if(a==0 && b==1){
+   tabela[j[2]].v++
+   tabela[j[2]].p+=2
+   tabela[j[1]].d++
+  }
+  else{
+   tabela[j[1]].e++
+   tabela[j[2]].e++
+   tabela[j[1]].p++
+   tabela[j[2]].p++
+  }
+
+ }
+
+ const ranking=Object.entries(tabela).sort((a,b)=>b[1].p-a[1].p)
+
+ const tbody=document.querySelector("#tabela tbody")
+ tbody.innerHTML=""
+
+ ranking.forEach(([nome,s],i)=>{
+
+  const diff=s.v-s.d
+
+  const tr=document.createElement("tr")
+
+  if(i==0) tr.classList.add("rank1")
+  if(i==1) tr.classList.add("rank2")
+  if(i==2) tr.classList.add("rank3")
+
+  tr.innerHTML=
+  "<td>"+(i+1)+"º</td>"+
+  "<td>"+nome+"</td>"+
+  "<td>"+s.v+"</td>"+
+  "<td>"+s.e+"</td>"+
+  "<td>"+s.d+"</td>"+
+  "<td>"+diff+"</td>"+
+  "<td>"+s.p+"</td>"
+
+  tbody.appendChild(tr)
+
+ })
+
+}
+
+async function atualizarStats(){
+
+ document.getElementById("totalEquipas").innerText=equipas.length
+ document.getElementById("totalJogos").innerText=jogos.length
+
+ let feitos=0
+
+ for(let i=0;i<jogos.length;i++){
+  const res=await getResultado(i)
+  if(res) feitos++
+ }
+
+ document.getElementById("jogosFeitos").innerText=feitos
+ document.getElementById("jogosFalta").innerText=jogos.length-feitos
+
+ const percent=Math.round((feitos/jogos.length)*100)
+
+ document.getElementById("progressFill").style.width=percent+"%"
+ document.getElementById("progressText").innerText=
+ feitos+" / "+jogos.length+" jogos concluídos ("+percent+"%)"
+
+}
+
 async function atualizarTudo(){
  await renderJogos()
  await calcularTabela()
